@@ -3429,7 +3429,7 @@ NonnullRefPtr<HTMLParser> HTMLParser::create_for_scripting(DOM::Document& docume
 
 NonnullRefPtr<HTMLParser> HTMLParser::create_with_uncertain_encoding(DOM::Document& document, const ByteBuffer& input)
 {
-    if (document.has_encoding())
+    if (document.has_encoding() && TextCodec::decoder_for(document.encoding().value()))
         return adopt_ref(*new HTMLParser(document, input, document.encoding().value()));
     auto encoding = run_encoding_sniffing_algorithm(document, input);
     dbgln("The encoding sniffing algorithm returned encoding '{}'", encoding);
