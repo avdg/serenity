@@ -9,6 +9,7 @@
 #include <AK/ByteBuffer.h>
 #include <AK/Debug.h>
 #include <AK/URL.h>
+#include <LibWeb/ImageDecoding.h>
 #include <LibWeb/CSS/Parser/Parser.h>
 #include <LibWeb/DOM/Document.h>
 #include <LibWeb/HTML/HTMLLinkElement.h>
@@ -52,6 +53,30 @@ void HTMLLinkElement::inserted()
         ResourceLoader::the().preconnect(document().parse_url(attribute(HTML::AttributeNames::href)));
     } else if (m_relationship & Relationship::Icon) {
         auto favicon_url = document().parse_url(href());
+
+        // See Userland\Libraries\LibWeb\Loader\FrameLoader.cpp FrameLoader::load for `AK::URL favicon_url;`
+        ResourceLoader::the().load(
+            favicon_url,
+            [this, favicon_url](auto data, auto&, auto) {
+                dbgln_if(SPAM_DEBUG, "Favicon downloaded, {} bytes from {}", data.size(), favicon_url);
+                if (data.is_empty())
+                    return;
+                RefPtr<Gfx::Bitmap> favicon_bitmap;
+                auto decoded_image = Web::image_decoder_client().decode_image(data);
+                if (!decoded_image.has_value() || decoded_image->frames.is_empty()) {
+                    dbgln("Could not decode favicon {}", favicon_url);
+                } else {
+                    favicon_bitmap = decoded_image->frames[0].bitmap;
+                    dbgln_if(IMAGE_DECODER_DEBUG, "Decoded favicon, {}", favicon_bitmap->size());
+                }
+                if (auto* page = document().browsing_context()->page()) {
+                    //page->client().page_did_change_favicon(favicon_bitmap);
+                }
+            },
+            [](auto& error, auto) {
+                dbgln("Failed to load favicon: {}", error);
+                VERIFY_NOT_REACHED();
+            });
     }
 }
 
