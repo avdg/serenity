@@ -50,6 +50,8 @@ void HTMLLinkElement::inserted()
         ResourceLoader::the().prefetch_dns(document().parse_url(attribute(HTML::AttributeNames::href)));
     } else if (m_relationship & Relationship::Preconnect) {
         ResourceLoader::the().preconnect(document().parse_url(attribute(HTML::AttributeNames::href)));
+    } else if (m_relationship & Relationship::Icon) {
+        auto favicon_url = document().parse_url(href());
     }
 }
 
@@ -69,6 +71,8 @@ void HTMLLinkElement::parse_attribute(const FlyString& name, const String& value
                 m_relationship |= Relationship::DNSPrefetch;
             else if (part == "preconnect"sv)
                 m_relationship |= Relationship::Preconnect;
+            else if (part == "icon"sv || part == "shortcut icon"sv)
+                m_relationship |= Relationship::Icon;
         }
     }
 }
