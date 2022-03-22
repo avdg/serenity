@@ -54,7 +54,12 @@ void HTMLLinkElement::inserted()
     } else if (m_relationship & Relationship::Icon) {
         auto favicon_url = document().parse_url(href());
 
-        // See Userland\Libraries\LibWeb\Loader\FrameLoader.cpp FrameLoader::load for `AK::URL favicon_url;`
+        // Specs:
+        // -https://html.spec.whatwg.org/multipage/links.html#linkTypes
+        // - https://html.spec.whatwg.org/multipage/links.html#rel-icon
+        //
+        // There is already some favicon implementation at Userland\Libraries\LibWeb\Loader\FrameLoader.cpp FrameLoader::load for `AK::URL favicon_url;`
+        // But with link tags, multiple favicons can be defined and which one is active depends on certain spec rules.
         ResourceLoader::the().load(
             favicon_url,
             [this, favicon_url](auto data, auto&, auto) {
